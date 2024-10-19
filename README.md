@@ -11,4 +11,4 @@ Roboflow is utilized to label and annotate product images, creating a robust dat
 Google Teachable Machine:
 Google Teachable Machine is employed to create, train, and test the ML model. The user uploads labeled images to the platform, and it automatically trains the model for classification tasks.
 
-please note that each program requires a certain package to be installed prior to the execution.
+Please note that each program requires a certain package to be installed prior to the execution.
