@@ -1,0 +1,56 @@
+import cv2
+import numpy as np
+import serial
+
+# Load YOLO
+net = cv2.dnn.readNet("yolov3.weights", "yolov3.cfg")
+layer_names = net.getLayerNames()
+output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
+
+# Setup Serial communication
+ser = serial.Serial('/dev/ttyUSB0', 9600)  # Adjust the port as necessary
+
+while True:
+    # Read image data from Arduino
+    if ser.in_waiting > 0:
+        # Assuming image data is received in a specific format
+        image_data = ser.read(size)  # Define `size` based on your image data
+        np_img = np.frombuffer(image_data, dtype=np.uint8).reshape((height, width, 3))  # Adjust height/width
+
+        # Object Detection
+        blob = cv2.dnn.blobFromImage(np_img, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
+        net.setInput(blob)
+        outs = net.forward(output_layers)
+
+        # Process the outputs
+        class_ids = []
+        confidences = []
+        boxes = []
+        for out in outs:
+            for detection in out:
+                scores = detection[5:]
+                class_id = np.argmax(scores)
+                confidence = scores[class_id]
+                if confidence > 0.5:  # Confidence threshold
+                    center_x = int(detection[0] * width)
+                    center_y = int(detection[1] * height)
+                    w = int(detection[2] * width)
+                    h = int(detection[3] * height)
+                    x = int(center_x - w / 2)
+                    y = int(center_y - h / 2)
+                    boxes.append([x, y, w, h])
+                    confidences.append(float(confidence))
+                    class_ids.append(class_id)
+
+        # Count objects
+        indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
+        object_count = len(indexes)
+
+        # Display the count
+        print(f"Detected Objects: {object_count}")
+
+        # Optionally display the image with detections
+        # cv2.imshow("Image", np_img)
+        # cv2.waitKey(1)
+
+ser.close()
